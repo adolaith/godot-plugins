@@ -1,5 +1,6 @@
 package application;
 
+import java.awt.image.RenderedImage;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileWriter;
@@ -10,12 +11,16 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 
+import javax.imageio.ImageIO;
+
 import javafx.application.Application;
+import javafx.embed.swing.SwingFXUtils;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Cursor;
+import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.Menu;
@@ -73,60 +78,7 @@ public class Main extends Application {
 			scene.getStylesheets().add(getClass().getResource("application.css").toExternalForm());
 			primaryStage.setScene(scene);
 			
-			MenuBar menu = new MenuBar();
-			
-			Menu menuFile = new Menu("File");
-			
-			MenuItem saveItem = new MenuItem("Save");
-			
-			MenuItem quitItem = new MenuItem("Quit");
-			quitItem.setOnAction(new EventHandler<ActionEvent>() {
-	            public void handle(ActionEvent t) {
-	                System.exit(0);
-	            }
-	        });
-			
-			menuFile.getItems().addAll(saveItem, quitItem);
-			
-			Menu menuBookmarks = new Menu("Bookmarks");
-			
-			Menu listItem = new Menu("Saved dirs");
-			selectedDir = new ToggleGroup();
-			
-			if(Files.exists(savedDirs)){
-				BufferedReader reader = Files.newBufferedReader(savedDirs);
-				
-				String dir = null;
-				
-				while((dir = reader.readLine()) != null){
-					newRadioItem(dir, listItem);
-				}
-				reader.close();
-			}
-			
-			MenuItem addItem = new MenuItem("Add dir");
-			addItem.setOnAction(new EventHandler<ActionEvent>() {
-	            public void handle(ActionEvent t) {
-	            	try {
-						DirectoryChooser dirDialog = new DirectoryChooser();
-						
-						File f = dirDialog.showDialog(primaryStage);
-						if(f != null){
-							PrintWriter output = new PrintWriter(new FileWriter(savedDirs.toFile(),true));
-							output.println(f.toString());
-							newRadioItem(f.toString(), listItem);
-							output.close();
-						}	            							
-						
-					} catch (IOException e) {
-						e.printStackTrace();
-					}
-	            }
-	        });
-						
-			menuBookmarks.getItems().addAll(addItem, listItem);
-			
-			menu.getMenus().addAll(menuFile, menuBookmarks);
+			MenuBar menu = createMenu(primaryStage, scene);
 			
 			((VBox) scene.getRoot()).getChildren().addAll(menu);
 			
@@ -161,6 +113,7 @@ public class Main extends Application {
 			imgPane.setVgap(5);
 			scroll.setContent(imgPane);
 			
+			GridPane genPane = new GridPane();
 			//generate tiles buttons
 			Button btn = new Button("Generate");
 			GridPane.setMargin(btn, new Insets(10, 0, 10, 0));
@@ -172,7 +125,21 @@ public class Main extends Application {
 				}
 			});
 			
-			grid.add(btn, 1, 1);
+			genPane.add(btn, 0, 0);
+			
+			btn = new Button("Clear");
+			GridPane.setMargin(btn, new Insets(10, 0, 10, 0));
+			btn.setOnAction(new EventHandler<ActionEvent>() {
+				
+				@Override
+				public void handle(ActionEvent event) {
+					((FlowPane)scene.lookup("#generated")).getChildren().clear();
+				}
+			});
+			
+			genPane.add(btn, 1, 0);
+			
+			grid.add(genPane, 1, 1);
 			
 			primaryStage.show();
 		} catch(Exception e) {
@@ -275,6 +242,94 @@ public class Main extends Application {
 		edgeMaskPane.setId("edges");
 		
 		return grid;
+	}
+	
+	private MenuBar createMenu(Stage stage, Scene scene){
+		MenuBar menu = new MenuBar();
+		
+		Menu menuFile = new Menu("File");
+		
+		MenuItem saveItem = new MenuItem("Save");
+		saveItem.setOnAction(new EventHandler<ActionEvent>() {
+            public void handle(ActionEvent t) {
+            	DirectoryChooser dirDialog = new DirectoryChooser();
+            	dirDialog.setTitle("Save all tiles to...");
+				
+				File f = dirDialog.showDialog(stage);
+				if(f != null){
+					int count = 0;
+					for(Node n: ((FlowPane)scene.lookup("#generated")).getChildren()){
+						File pic = new File(f, "tile_"+ count +".png");
+						
+						RenderedImage renderedImage = SwingFXUtils.fromFXImage(((ImageView) n).getImage(), null);
+						
+						try {
+							ImageIO.write(renderedImage, "png",	pic);
+						} catch (IOException e) {
+							e.printStackTrace();
+						}
+						
+						count++;
+					}
+				}
+
+            }
+        });
+		
+		MenuItem quitItem = new MenuItem("Quit");
+		quitItem.setOnAction(new EventHandler<ActionEvent>() {
+            public void handle(ActionEvent t) {
+                System.exit(0);
+            }
+        });
+		
+		menuFile.getItems().addAll(saveItem, quitItem);
+		
+		Menu menuBookmarks = new Menu("Bookmarks");
+		
+		Menu listItem = new Menu("Saved dirs");
+		selectedDir = new ToggleGroup();
+		
+		if(Files.exists(savedDirs)){
+			try{
+				BufferedReader reader = Files.newBufferedReader(savedDirs);
+				
+				String dir = null;
+				
+				while((dir = reader.readLine()) != null){
+					newRadioItem(dir, listItem);
+				}
+				reader.close();
+			}catch(Exception e){
+				System.out.println("error: " + e);
+			}
+		}
+		
+		MenuItem addItem = new MenuItem("Add dir");
+		addItem.setOnAction(new EventHandler<ActionEvent>() {
+            public void handle(ActionEvent t) {
+            	try {
+					DirectoryChooser dirDialog = new DirectoryChooser();
+					
+					File f = dirDialog.showDialog(stage);
+					if(f != null){
+						PrintWriter output = new PrintWriter(new FileWriter(savedDirs.toFile(),true));
+						output.println(f.toString());
+						newRadioItem(f.toString(), listItem);
+						output.close();
+					}	            							
+					
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+            }
+        });
+					
+		menuBookmarks.getItems().addAll(addItem, listItem);
+		
+		menu.getMenus().addAll(menuFile, menuBookmarks);
+		
+		return menu;
 	}
 	
 	private VBox createImgScroller(GridPane root, int startCol, int startRow, int colSpan, int rowSpan, int width, int height){
