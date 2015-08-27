@@ -14,6 +14,8 @@ import java.util.ArrayList;
 import javax.imageio.ImageIO;
 
 import javafx.application.Application;
+import javafx.beans.value.ChangeListener;
+import javafx.beans.value.ObservableValue;
 import javafx.embed.swing.SwingFXUtils;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
@@ -23,6 +25,7 @@ import javafx.scene.Cursor;
 import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
+import javafx.scene.control.CheckBox;
 import javafx.scene.control.Menu;
 import javafx.scene.control.MenuBar;
 import javafx.scene.control.MenuItem;
@@ -46,8 +49,10 @@ import javafx.stage.Stage;
 
 public class Main extends Application {
 	int width, height, tileW, tileH;
-	ArrayList<ImageView> gendTiles;
 	Path savedDirs;
+	
+	ArrayList<ImageView> gendTiles;
+	boolean[] maskingOptions;
 	
 	ToggleGroup selectedDir;
 	
@@ -59,6 +64,8 @@ public class Main extends Application {
 	public void start(Stage primaryStage) {
 		width = 830;
 		height = 400;
+		
+		maskingOptions = new boolean[]{false, false, false, false};
 		
 		try {
 			savedDirs = Paths.get(System.getProperty("user.home") + File.separator + "tileGen");
@@ -99,47 +106,7 @@ public class Main extends Application {
 			grid.add( addButtons, 0, 1);
 			
 			//generated images pane
-			ScrollPane scroll = new ScrollPane();
-			scroll.setHbarPolicy(ScrollBarPolicy.NEVER);
-			scroll.setVbarPolicy(ScrollBarPolicy.AS_NEEDED);
-			GridPane.setVgrow(scroll, Priority.ALWAYS);
-			GridPane.setHgrow(scroll, Priority.ALWAYS);
-			
-			grid.add(scroll, 1, 0);
-			
-			FlowPane imgPane = new FlowPane();
-			imgPane.setId("generated");
-			imgPane.setHgap(5);
-			imgPane.setVgap(5);
-			scroll.setContent(imgPane);
-			
-			GridPane genPane = new GridPane();
-			//generate tiles buttons
-			Button btn = new Button("Generate");
-			GridPane.setMargin(btn, new Insets(10, 0, 10, 0));
-			btn.setOnAction(new EventHandler<ActionEvent>() {
-				
-				@Override
-				public void handle(ActionEvent event) {
-					Generator.generateTiles(scene);					
-				}
-			});
-			
-			genPane.add(btn, 0, 0);
-			
-			btn = new Button("Clear");
-			GridPane.setMargin(btn, new Insets(10, 0, 10, 0));
-			btn.setOnAction(new EventHandler<ActionEvent>() {
-				
-				@Override
-				public void handle(ActionEvent event) {
-					((FlowPane)scene.lookup("#generated")).getChildren().clear();
-				}
-			});
-			
-			genPane.add(btn, 1, 0);
-			
-			grid.add(genPane, 1, 1);
+			createGenerationArea(grid, scene);
 			
 			primaryStage.show();
 		} catch(Exception e) {
@@ -235,13 +202,94 @@ public class Main extends Application {
 		grid.setAlignment(Pos.TOP_LEFT);
 		grid.setHgap(30);
 		
-		VBox imgPane = createImgScroller(grid, 0, 0, 1, 6, width, height);
+		VBox imgPane = createImgScroller(grid, 0, 0, 1, 1, width, height);
 		imgPane.setId("tiles");
 		
-		VBox edgeMaskPane = createImgScroller(grid, 1, 3, 1, 1, width, height / 3);
+		VBox edgeMaskPane = createImgScroller(grid, 1, 0, 1, 1, width, height);
 		edgeMaskPane.setId("edges");
 		
 		return grid;
+	}
+	
+	private void createGenerationArea(GridPane grid, Scene scene){
+		ScrollPane scroll = new ScrollPane();
+		scroll.setHbarPolicy(ScrollBarPolicy.NEVER);
+		scroll.setVbarPolicy(ScrollBarPolicy.AS_NEEDED);
+		GridPane.setVgrow(scroll, Priority.ALWAYS);
+		GridPane.setHgrow(scroll, Priority.ALWAYS);
+		
+		grid.add(scroll, 1, 0);
+		
+		FlowPane imgPane = new FlowPane();
+		imgPane.setId("generated");
+		imgPane.setHgap(5);
+		imgPane.setVgap(5);
+		scroll.setContent(imgPane);
+		
+		GridPane genPane = new GridPane();
+		
+		CheckBox option = new CheckBox("Rotate");
+		option.selectedProperty().addListener(new ChangeListener<Boolean>() {
+			@Override
+			public void changed(ObservableValue<? extends Boolean> observable, Boolean oldValue, Boolean newValue) {
+				maskingOptions[0] = !maskingOptions[0];
+			}			
+		});
+		genPane.add(option, 0, 0);
+		
+		option = new CheckBox("Mirror");
+		option.selectedProperty().addListener(new ChangeListener<Boolean>() {
+			@Override
+			public void changed(ObservableValue<? extends Boolean> observable, Boolean oldValue, Boolean newValue) {
+				maskingOptions[1] = !maskingOptions[1];
+			}			
+		});
+		genPane.add(option, 1, 0);
+		
+		option = new CheckBox("Corners");
+		option.selectedProperty().addListener(new ChangeListener<Boolean>() {
+			@Override
+			public void changed(ObservableValue<? extends Boolean> observable, Boolean oldValue, Boolean newValue) {
+				maskingOptions[2] = !maskingOptions[2];
+			}			
+		});
+		genPane.add(option, 2, 0);
+		
+		option = new CheckBox("Full");
+		option.selectedProperty().addListener(new ChangeListener<Boolean>() {
+			@Override
+			public void changed(ObservableValue<? extends Boolean> observable, Boolean oldValue, Boolean newValue) {
+				maskingOptions[3] = !maskingOptions[3];
+			}			
+		});
+		genPane.add(option, 3, 0);
+		
+		//generate tiles buttons
+		Button btn = new Button("Generate");
+		GridPane.setMargin(btn, new Insets(5, 5, 5, 0));
+		btn.setOnAction(new EventHandler<ActionEvent>() {
+			
+			@Override
+			public void handle(ActionEvent event) {
+				Generator.generateTiles(scene, maskingOptions);					
+			}
+		});
+		
+		genPane.add(btn, 0, 1);
+		
+		btn = new Button("Clear");
+		GridPane.setMargin(btn, new Insets(5, 0, 5, 0));
+		btn.setOnAction(new EventHandler<ActionEvent>() {
+			
+			@Override
+			public void handle(ActionEvent event) {
+				((FlowPane)scene.lookup("#generated")).getChildren().clear();
+			}
+		});
+		
+		genPane.add(btn, 1, 1);
+		
+		grid.add(genPane, 1, 1);
 	}
 	
 	private MenuBar createMenu(Stage stage, Scene scene){
@@ -256,7 +304,7 @@ public class Main extends Application {
             	dirDialog.setTitle("Save all tiles to...");
 				
 				File f = dirDialog.showDialog(stage);
-				if(f != null){
+				if(f != null && ((FlowPane)scene.lookup("#generated")).getChildren().size() > 0){
 					int count = 0;
 					for(Node n: ((FlowPane)scene.lookup("#generated")).getChildren()){
 						File pic = new File(f, "tile_"+ count +".png");
