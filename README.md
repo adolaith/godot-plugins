@@ -5,4 +5,4 @@ texturepacker (https://github.com/libgdx/libgdx/wiki/Texture-packer). Based off 
 
 >Tile Generator(JavaFx application)
 -Create transtition tiles from selected tiles and masks
-![](/TileGenerator/Screenshot from 2015-08-26 15:06:51.png)
+![](/TileGenerator/Screenshot.png)
