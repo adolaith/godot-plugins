@@ -69,7 +69,7 @@ func _on_dialog_confirm():
 		var baseH = dialog.get_node("tileH").get_text().to_float();
 				
 		if baseW > 0 || baseH > 0:
-			var off = Vector2(baseW - wh[0].strip_edges().to_float(), baseH - wh[1].strip_edges().to_float())
+			var off = Vector2(wh[0].strip_edges().to_float() - baseW, baseH - wh[1].strip_edges().to_float())
 			if off.x != 0 || off.y != 0:
 				s.set_offset(off)
 		
