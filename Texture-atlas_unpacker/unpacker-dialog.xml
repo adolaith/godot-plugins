@@ -249,9 +249,9 @@
 				<real> 371 </real>
 				<real> 171 </real>
 				<real> 0 </real>
-				<real> 5 </real>
+				<real> 4 </real>
 				<real> 6.307693 </real>
-				<string> "Select a valid .pack file created with the LibGDX Texturepacker.&#000a;Basic functionallity only, ie cutting out images and indexes.&#000a;Other properties(filters, rotation) could easily be added is desired." </string>
+				<string> "Select a valid .pack file created with the LibGDX Texturepacker.&#000a;Basic functionallity only, ie cutting out images and indexes.&#000a;REQUIRES: a root node, eg Node2d" </string>
 				<real> -1 </real>
 				<real> 207 </real>
 				<real> 59 </real>
