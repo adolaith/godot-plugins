@@ -67,7 +67,9 @@ func _on_dialog_confirm():
 		
 		var baseW = dialog.get_node("tileW").get_text().to_float();
 		var baseH = dialog.get_node("tileH").get_text().to_float();
-				
+		
+		print("width ",baseW, ". height: ", baseH)
+		
 		if baseW > 0 || baseH > 0:
 			var off = Vector2(baseW - wh[0].strip_edges().to_float(), baseH - wh[1].strip_edges().to_float())
 			if off.x != 0 || off.y != 0:
